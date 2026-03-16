@@ -269,12 +269,10 @@ async function leesUit() {
   btn.disabled = true;
   const units = { elektriciteit:'kWh', gas:'m³', water:'m³' };
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch('https://meterscan-api.riklentjes74.workers.dev', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': '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',
-        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514', max_tokens: 200,
