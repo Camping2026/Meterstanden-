@@ -3,81 +3,73 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MeterScan Pro</title>
+<title>MeterScan Pro — Crop</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: Arial, sans-serif; background: #0f1117; color: #e8eaf0; max-width: 480px; margin: 0 auto; min-height: 100vh; }
-
-.header { background: #1a1d27; border-bottom: 1px solid #2a2f45; padding: 16px; position: sticky; top: 0; z-index: 100; }
+.header { background: #1a1d27; border-bottom: 1px solid #2a2f45; padding: 16px; position: sticky; top: 0; z-index: 50; }
 .logo { font-size: 20px; font-weight: 700; color: #00e5a0; margin-bottom: 12px; }
 .logo span { color: #e8eaf0; }
 .tabs { display: flex; background: #22263a; border-radius: 10px; padding: 4px; gap: 4px; }
 .tab { flex: 1; padding: 9px 4px; border: none; background: transparent; color: #6b7280; font-size: 12px; border-radius: 7px; cursor: pointer; }
 .tab.active { background: #1a1d27; color: #00e5a0; border: 1px solid #2a2f45; }
-
 .page { display: none; padding: 16px; }
 .page.active { display: block; }
 .lbl { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px; }
-
 select, input[type=text] { width: 100%; padding: 13px 14px; background: #1a1d27; border: 1px solid #2a2f45; border-radius: 10px; color: #e8eaf0; font-size: 15px; margin-bottom: 14px; }
 select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
-
 .meter-btns { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
 .mbtn { padding: 14px 8px; border: 2px solid #2a2f45; background: #1a1d27; color: #6b7280; border-radius: 12px; cursor: pointer; font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .mbtn .ico { font-size: 24px; }
 .mbtn.se { border-color: #ffd700; color: #ffd700; background: rgba(255,215,0,0.08); }
 .mbtn.sg { border-color: #ff6b35; color: #ff6b35; background: rgba(255,107,53,0.08); }
 .mbtn.sw { border-color: #00b4d8; color: #00b4d8; background: rgba(0,180,216,0.08); }
-
 .foto-label { display: block; width: 100%; border: 2px dashed #2a2f45; border-radius: 12px; padding: 28px 16px; text-align: center; cursor: pointer; margin-bottom: 14px; background: #1a1d27; -webkit-tap-highlight-color: transparent; }
 .foto-label .fi { font-size: 32px; margin-bottom: 8px; }
 .foto-label .ft { color: #00e5a0; font-weight: 700; font-size: 15px; margin-bottom: 4px; }
 .foto-label .fs { color: #6b7280; font-size: 13px; }
-.foto-label img { max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: cover; }
-
+.foto-label img { max-width: 100%; max-height: 240px; border-radius: 8px; object-fit: contain; }
+.tip-box { background: rgba(0,229,160,0.08); border: 1px solid rgba(0,229,160,0.25); color: #b8ffeb; border-radius: 12px; padding: 12px 14px; font-size: 13px; margin-bottom: 12px; line-height: 1.4; }
+.row-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
 .btn-p { width: 100%; padding: 15px; background: #00e5a0; border: none; border-radius: 12px; color: #0f1117; font-size: 16px; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
-.btn-p:disabled { opacity: 0.4; }
-.btn-s { width: 100%; padding: 14px; background: #1a1d27; border: 1px solid #00e5a0; border-radius: 12px; color: #00e5a0; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 12px; }
-
+.btn-p:disabled, .btn-s:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-s, .btn-o { width: 100%; padding: 14px; background: #1a1d27; border: 1px solid #00e5a0; border-radius: 12px; color: #00e5a0; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 12px; }
+.btn-o { border-color: #2a2f45; color: #e8eaf0; }
 .res-box { background: #1a1d27; border: 1px solid #2a2f45; border-radius: 12px; padding: 16px; margin-bottom: 14px; display: none; }
 .res-box.show { display: block; }
 .res-lbl { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
 .res-val { font-size: 34px; font-weight: 700; color: #00e5a0; font-family: monospace; }
-.res-note { font-size: 12px; color: #6b7280; margin-top: 8px; background: #22263a; padding: 8px 10px; border-radius: 6px; }
-
+.res-note { font-size: 12px; color: #c7cce0; margin-top: 8px; background: #22263a; padding: 10px 12px; border-radius: 8px; line-height: 1.4; }
 input.stand { font-size: 22px; text-align: center; font-family: monospace; }
-
 .row-in { display: flex; gap: 10px; margin-bottom: 14px; }
 .row-in input { margin-bottom: 0; flex: 1; }
 .btn-add { padding: 13px 18px; background: #00e5a0; border: none; border-radius: 10px; color: #0f1117; font-size: 20px; font-weight: 700; cursor: pointer; }
-
 .imp-label { display: block; width: 100%; border: 2px dashed #0099ff; border-radius: 12px; padding: 20px 16px; text-align: center; cursor: pointer; margin-bottom: 8px; background: rgba(0,153,255,0.05); -webkit-tap-highlight-color: transparent; }
 .imp-label .ii { font-size: 28px; margin-bottom: 6px; }
 .imp-label .it { color: #0099ff; font-weight: 700; font-size: 15px; margin-bottom: 3px; }
 .imp-label .is { color: #6b7280; font-size: 12px; }
-
 .addr-item { background: #1a1d27; border: 1px solid #2a2f45; border-radius: 10px; padding: 13px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .addr-name { font-size: 14px; font-weight: 500; }
 .addr-cnt { font-size: 12px; color: #6b7280; margin-top: 2px; }
 .btn-del { background: none; border: 1px solid #2a2f45; border-radius: 7px; color: #6b7280; padding: 6px 10px; cursor: pointer; }
-
 .r-card { background: #1a1d27; border: 1px solid #2a2f45; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
-.r-head { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.r-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
 .r-addr { font-size: 14px; font-weight: 600; }
-.r-date { font-size: 12px; color: #6b7280; }
+.r-date { font-size: 12px; color: #6b7280; text-align: right; }
 .r-tag { font-family: monospace; font-size: 12px; padding: 4px 10px; border-radius: 100px; font-weight: 700; display: inline-block; margin-bottom: 6px; }
 .te { background: rgba(255,215,0,0.12); color: #ffd700; }
 .tg { background: rgba(255,107,53,0.12); color: #ff6b35; }
 .tw { background: rgba(0,180,216,0.12); color: #00b4d8; }
 .r-foto { width: 100%; max-height: 140px; object-fit: cover; border-radius: 8px; margin-top: 8px; cursor: pointer; display: block; }
-
 .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
 .stat { background: #1a1d27; border: 1px solid #2a2f45; border-radius: 10px; padding: 14px; text-align: center; }
 .sn { font-size: 26px; font-weight: 700; color: #00e5a0; font-family: monospace; }
 .sl { font-size: 11px; color: #6b7280; margin-top: 3px; }
-
 .card { background: #1a1d27; border: 1px solid #2a2f45; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
 .ct { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
 .cd { font-size: 13px; color: #6b7280; margin-bottom: 14px; }
@@ -85,7 +77,6 @@ input.stand { font-size: 22px; text-align: center; font-family: monospace; }
 .btn-v { width:100%;padding:14px;background:#7c3aed;color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px; }
 .btn-b { width:100%;padding:14px;background:#0369a1;color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px; }
 .btn-d { width:100%;padding:14px;background:#22263a;color:#e8eaf0;border:1px solid #2a2f45;border-radius:12px;font-size:15px;cursor:pointer;margin-bottom:10px; }
-
 .msg { font-size: 13px; padding: 10px 12px; border-radius: 8px; background: #22263a; color: #6b7280; margin-bottom: 12px; }
 .msg.ok { color: #00e5a0; }
 .msg.err { color: #ff6b35; }
@@ -93,12 +84,25 @@ input.stand { font-size: 22px; text-align: center; font-family: monospace; }
 .ei { font-size: 36px; margin-bottom: 10px; }
 .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(15,17,23,0.3); border-top-color: #0f1117; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); background: #00e5a0; color: #0f1117; padding: 11px 22px; border-radius: 100px; font-weight: 600; font-size: 14px; z-index: 999; transition: transform 0.3s; white-space: nowrap; pointer-events: none; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); background: #00e5a0; color: #0f1117; padding: 11px 22px; border-radius: 100px; font-weight: 600; font-size: 14px; z-index: 999; transition: transform 0.3s; white-space: nowrap; pointer-events: none; max-width: calc(100vw - 24px); overflow: hidden; text-overflow: ellipsis; }
 .toast.show { transform: translateX(-50%) translateY(0); }
+.modal { position: fixed; inset: 0; background: rgba(10,12,18,0.95); z-index: 500; display: none; flex-direction: column; }
+.modal.show { display: flex; }
+.modal-head { padding: 14px 16px; border-bottom: 1px solid #2a2f45; }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.modal-sub { font-size: 13px; color: #9aa0b4; line-height: 1.35; }
+.crop-wrap { flex: 1; padding: 12px; min-height: 0; }
+.crop-box { width: 100%; height: 100%; min-height: 320px; background: #0a0c12; border-radius: 12px; overflow: hidden; }
+#cropImage { display: block; max-width: 100%; }
+.modal-actions { padding: 12px 16px 18px; border-top: 1px solid #2a2f45; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.crop-preview-card { background: #1a1d27; border: 1px solid #2a2f45; border-radius: 12px; padding: 12px; margin-bottom: 12px; display: none; }
+.crop-preview-card.show { display: block; }
+.crop-preview-card img { width: 100%; max-height: 120px; object-fit: contain; background: #0f1117; border-radius: 8px; }
+.crop-meta { margin-top: 8px; font-size: 12px; color: #9aa0b4; }
+.hidden { display: none !important; }
 </style>
 </head>
 <body>
-
 <div class="header">
   <div class="logo">Meter<span>Scan</span> Pro</div>
   <div class="tabs">
@@ -109,7 +113,6 @@ input.stand { font-size: 22px; text-align: center; font-family: monospace; }
   </div>
 </div>
 
-<!-- SCAN -->
 <div id="page-scan" class="page active">
   <p class="lbl">Stap 1 — Adres</p>
   <select id="scanAdres" onchange="checkKlaar()"><option value="">— Kies een adres —</option></select>
@@ -120,6 +123,8 @@ input.stand { font-size: 22px; text-align: center; font-family: monospace; }
     <button class="mbtn" onclick="kiesMeter('gas',this)"><span class="ico">🔥</span>Gas</button>
     <button class="mbtn" onclick="kiesMeter('water',this)"><span class="ico">💧</span>Water</button>
   </div>
+
+  <div class="tip-box">Maak eerst een foto en snijd daarna alleen het <b>telvenster of display</b> bij. Dat is veel sneller en nauwkeuriger dan de hele foto scannen.</div>
 
   <p class="lbl">Stap 3 — Foto</p>
   <label class="foto-label" id="fotoLabel" for="fotoInput">
@@ -132,7 +137,16 @@ input.stand { font-size: 22px; text-align: center; font-family: monospace; }
   </label>
   <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none" onchange="handleFoto(event)">
 
-  <button class="btn-p" id="aiBtn" onclick="leesUit()" disabled>🤖 Lees meterstand uit</button>
+  <div class="crop-preview-card" id="cropCard">
+    <div class="res-lbl">Geselecteerd telvenster</div>
+    <img id="cropPreview" alt="Bijgesneden telvenster">
+    <div class="crop-meta" id="cropMeta">Nog niet bijgesneden.</div>
+  </div>
+
+  <div class="row-btns">
+    <button class="btn-o" id="cropBtn" onclick="openCropper()" disabled>✂️ Bijsnijden</button>
+    <button class="btn-p" id="aiBtn" onclick="leesUit()" disabled>🤖 Uitlezen</button>
+  </div>
 
   <div class="res-box" id="resBox">
     <div class="res-lbl">Uitgelezen meterstand</div>
@@ -145,7 +159,6 @@ input.stand { font-size: 22px; text-align: center; font-family: monospace; }
   <button class="btn-s" onclick="slaOp()">✅ Opslaan</button>
 </div>
 
-<!-- ADRESSEN -->
 <div id="page-adressen" class="page">
   <p class="lbl">Handmatig toevoegen</p>
   <div class="row-in">
@@ -166,13 +179,11 @@ input.stand { font-size: 22px; text-align: center; font-family: monospace; }
   <div id="adresLijst"></div>
 </div>
 
-<!-- HISTORIE -->
 <div id="page-historie" class="page">
   <p class="lbl">Opgeslagen meterstanden</p>
   <div id="historieLijst"></div>
 </div>
 
-<!-- EXPORT -->
 <div id="page-export" class="page">
   <p class="lbl">Overzicht</p>
   <div class="stats">
@@ -198,6 +209,22 @@ input.stand { font-size: 22px; text-align: center; font-family: monospace; }
   </div>
 </div>
 
+<div class="modal" id="cropModal">
+  <div class="modal-head">
+    <div class="modal-title">Snijd alleen de teller uit</div>
+    <div class="modal-sub">Sleep het kader rond de cijfers of het display. Hoe strakker, hoe beter de herkenning.</div>
+  </div>
+  <div class="crop-wrap">
+    <div class="crop-box">
+      <img id="cropImage" alt="Te croppen foto">
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn-o" onclick="closeCropper()">Annuleren</button>
+    <button class="btn-p" onclick="applyCrop()">Gebruik uitsnede</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -205,6 +232,11 @@ let adressen = ["Hoofdstraat 12, Zevenaar", "Kerkstraat 5, Duiven"];
 let metingen = [];
 let selMeter = null;
 let fotoB64 = null;
+let origineleDataUrl = null;
+let cropDataUrl = null;
+let cropB64 = null;
+let cropper = null;
+let ocrWorkerPromise = null;
 
 try { const a = localStorage.getItem('ms_a'); if (a) adressen = JSON.parse(a); } catch(e){}
 try { const m = localStorage.getItem('ms_m'); if (m) metingen = JSON.parse(m); } catch(e){}
@@ -245,7 +277,30 @@ function kiesMeter(type, el) {
 }
 
 function checkKlaar() {
-  document.getElementById('aiBtn').disabled = !(document.getElementById('scanAdres').value && selMeter && fotoB64);
+  document.getElementById('cropBtn').disabled = !origineleDataUrl;
+  document.getElementById('aiBtn').disabled = !(document.getElementById('scanAdres').value && selMeter && (cropB64 || fotoB64));
+}
+
+function resetScanResult() {
+  document.getElementById('resBox').classList.remove('show');
+  document.getElementById('resVal').textContent = '—';
+  document.getElementById('resNote').textContent = '';
+  document.getElementById('standInput').value = '';
+}
+
+function updateCropCard() {
+  const card = document.getElementById('cropCard');
+  const img = document.getElementById('cropPreview');
+  const meta = document.getElementById('cropMeta');
+  if (!cropDataUrl) {
+    card.classList.remove('show');
+    img.src = '';
+    meta.textContent = 'Nog niet bijgesneden.';
+    return;
+  }
+  card.classList.add('show');
+  img.src = cropDataUrl;
+  meta.textContent = 'Deze uitsnede wordt gebruikt voor de scan.';
 }
 
 function handleFoto(e) {
@@ -253,52 +308,301 @@ function handleFoto(e) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
-    fotoB64 = ev.target.result.split(',')[1];
+    origineleDataUrl = ev.target.result;
+    fotoB64 = origineleDataUrl.split(',')[1];
+    cropDataUrl = null;
+    cropB64 = null;
+    resetScanResult();
     const img = document.getElementById('fotoPreview');
-    img.src = ev.target.result;
+    img.src = origineleDataUrl;
     img.style.display = 'block';
     document.getElementById('fotoPlaceholder').style.display = 'none';
+    updateCropCard();
     checkKlaar();
+    toast('📷 Foto geladen. Snijd nu het telvenster bij.');
+    setTimeout(() => openCropper(), 120);
   };
   reader.readAsDataURL(file);
 }
 
+function openCropper() {
+  if (!origineleDataUrl) return;
+  const modal = document.getElementById('cropModal');
+  const img = document.getElementById('cropImage');
+  img.src = cropDataUrl || origineleDataUrl;
+  modal.classList.add('show');
+  setTimeout(() => {
+    if (cropper) cropper.destroy();
+    cropper = new Cropper(img, {
+      viewMode: 1,
+      autoCropArea: 0.7,
+      dragMode: 'move',
+      background: false,
+      responsive: true,
+      movable: true,
+      zoomable: true,
+      scalable: false,
+      rotatable: false,
+      guides: true,
+      center: true,
+      highlight: true,
+      cropBoxResizable: true,
+      cropBoxMovable: true,
+      toggleDragModeOnDblclick: false,
+    });
+  }, 50);
+}
+
+function closeCropper() {
+  document.getElementById('cropModal').classList.remove('show');
+  if (cropper) { cropper.destroy(); cropper = null; }
+}
+
+function applyCrop() {
+  if (!cropper) return;
+  const canvas = cropper.getCroppedCanvas({
+    minWidth: 300,
+    minHeight: 80,
+    maxWidth: 1600,
+    maxHeight: 800,
+    imageSmoothingEnabled: true,
+    imageSmoothingQuality: 'high'
+  });
+  if (!canvas) return;
+  cropDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+  cropB64 = cropDataUrl.split(',')[1];
+  updateCropCard();
+  closeCropper();
+  checkKlaar();
+  toast('✂️ Uitsnede opgeslagen.');
+}
+
+async function getWorker() {
+  if (!ocrWorkerPromise) {
+    ocrWorkerPromise = Tesseract.createWorker('eng');
+  }
+  return ocrWorkerPromise;
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+async function makeVariants(src) {
+  const img = await loadImage(src);
+  const variants = [];
+
+  function build(label, fn) {
+    const scale = Math.min(3, Math.max(2, 1200 / Math.max(img.width, 1)));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.width * scale));
+    canvas.height = Math.max(1, Math.round(img.height * scale));
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    fn(imageData.data, canvas.width, canvas.height);
+    ctx.putImageData(imageData, 0, 0);
+    variants.push({ label, canvas });
+  }
+
+  build('gray-high-contrast', (d) => {
+    for (let i = 0; i < d.length; i += 4) {
+      const g = Math.round(d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114);
+      let v = (g - 128) * 2.25 + 128;
+      v = Math.max(0, Math.min(255, v));
+      d[i] = d[i+1] = d[i+2] = v;
+    }
+  });
+
+  build('binary', (d) => {
+    for (let i = 0; i < d.length; i += 4) {
+      const g = Math.round(d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114);
+      const v = g > 145 ? 255 : 0;
+      d[i] = d[i+1] = d[i+2] = v;
+    }
+  });
+
+  build('invert-binary', (d) => {
+    for (let i = 0; i < d.length; i += 4) {
+      const g = Math.round(d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114);
+      const v = g > 150 ? 0 : 255;
+      d[i] = d[i+1] = d[i+2] = v;
+    }
+  });
+
+  build('green-display', (d) => {
+    for (let i = 0; i < d.length; i += 4) {
+      const greenBias = d[i+1] - ((d[i] + d[i+2]) / 2);
+      let v = 255 - Math.max(0, Math.min(255, (greenBias + 70) * 2));
+      if (d[i+1] > 140 && d[i] < 120) v *= 0.55;
+      v = Math.max(0, Math.min(255, v));
+      d[i] = d[i+1] = d[i+2] = v;
+    }
+  });
+
+  return variants;
+}
+
+function normalizeText(text) {
+  return (text || '')
+    .replace(/[Oo]/g, '0')
+    .replace(/[Il|]/g, '1')
+    .replace(/[Ss]/g, '5')
+    .replace(/[Bb]/g, '8')
+    .replace(/,/g, '.')
+    .replace(/m\s*3/ig, 'm3')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function candidateScore(raw, meterType) {
+  if (!raw) return -999;
+  let score = 0;
+  if (/meterstand/i.test(raw)) score += 1;
+  if (/m3|kwh/i.test(raw)) score += 1;
+  if (/\d{4,8}[.,]\d{1,3}/.test(raw)) score += 6;
+  if (/\b\d{4,8}\b/.test(raw)) score += 4;
+  if (/\?/.test(raw)) score -= 3;
+  if (meterType !== 'elektriciteit' && /\d{4,8}[.,]\d{1,3}/.test(raw)) score += 1;
+  return score;
+}
+
+function parseStandFromText(text, meterType) {
+  const raw = normalizeText(text);
+  const lines = raw.split(/\n|\r/).map(x => x.trim()).filter(Boolean);
+  const joined = lines.join(' ');
+  const candidates = [];
+
+  const pushCandidate = (value, score, reason) => {
+    if (!value) return;
+    const clean = String(value).replace(/\D/g, '');
+    if (!clean) return;
+    if (meterType === 'elektriciteit') {
+      if (clean.length < 4 || clean.length > 9) return;
+    } else {
+      if (clean.length < 3 || clean.length > 7) return;
+    }
+    candidates.push({ value: clean, score, reason });
+  };
+
+  for (const line of lines) {
+    const scoreBase = candidateScore(line, meterType);
+    const dec = line.match(/(\d{3,8})\s*[.,]\s*(\d{1,3})/);
+    if (dec) pushCandidate(dec[1], scoreBase + 5, 'voor komma/punt');
+    const ints = line.match(/\b(\d{4,9})\b/g) || [];
+    ints.forEach(v => pushCandidate(v, scoreBase + 2, 'hele regel'));
+  }
+
+  const joinedDec = joined.match(/(\d{3,8})\s*[.,]\s*(\d{1,3})/);
+  if (joinedDec) pushCandidate(joinedDec[1], 12, 'samengevoegde tekst');
+  const joinedInts = joined.match(/\b(\d{4,9})\b/g) || [];
+  joinedInts.forEach(v => pushCandidate(v, 7, 'samengevoegde tekst'));
+
+  const counts = new Map();
+  for (const c of candidates) {
+    const prev = counts.get(c.value) || { votes: 0, bestScore: -999, reason: c.reason };
+    prev.votes += 1;
+    if (c.score > prev.bestScore) {
+      prev.bestScore = c.score;
+      prev.reason = c.reason;
+    }
+    counts.set(c.value, prev);
+  }
+
+  const ranked = [...counts.entries()].map(([value, meta]) => ({
+    value,
+    score: meta.bestScore + meta.votes * 2,
+    votes: meta.votes,
+    reason: meta.reason,
+  })).sort((a, b) => b.score - a.score || b.votes - a.votes || b.value.length - a.value.length);
+
+  return ranked[0] || null;
+}
+
+async function recognizeVariant(worker, canvas, meterType) {
+  await worker.setParameters({
+    tessedit_pageseg_mode: meterType === 'elektriciteit' ? '6' : '7',
+    tessedit_char_whitelist: '0123456789.,mMkKwWhHstTandMeter ' 
+  });
+  const { data } = await worker.recognize(canvas);
+  return {
+    text: data.text || '',
+    confidence: Number(data.confidence || 0),
+  };
+}
+
 async function leesUit() {
   const btn = document.getElementById('aiBtn');
-  btn.innerHTML = '<span class="spinner"></span>Bezig…';
+  const source = cropDataUrl || origineleDataUrl;
+  if (!source) { toast('⚠️ Voeg eerst een foto toe'); return; }
+  if (!selMeter) { toast('⚠️ Kies eerst een metertype'); return; }
+
+  btn.innerHTML = '<span class="spinner"></span>Scannen…';
   btn.disabled = true;
+  document.getElementById('resBox').classList.add('show');
+  document.getElementById('resVal').textContent = '…';
+  document.getElementById('resNote').textContent = 'Bezig met uitlezen van de uitsnede.';
+
   const units = { elektriciteit:'kWh', gas:'m³', water:'m³' };
+
   try {
-    const resp = await fetch('https://meterscan-api.riklentjes74.workers.dev', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514', max_tokens: 200,
-        messages: [{ role: 'user', content: [
-          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: fotoB64 } },
-          { type: 'text', text: `Lees de meterstand af van deze ${selMeter}meter. Negeer rode/decimale vakjes. Antwoord ALLEEN als JSON: {"stand":"5910","uitleg":"toelichting"}` }
-        ]}]
-      })
-    });
-    const data = await resp.json();
-    const raw = data.content?.[0]?.text || '';
-    const m = raw.match(/\{.*\}/s);
-    const p = m ? JSON.parse(m[0]) : {};
-    document.getElementById('resVal').textContent = (p.stand||'?') + ' ' + units[selMeter];
-    document.getElementById('resNote').textContent = '💡 ' + (p.uitleg||'Controleer handmatig.');
-    document.getElementById('resBox').classList.add('show');
-    document.getElementById('standInput').value = p.stand || '';
-    toast('✅ Uitgelezen!');
-  } catch(e) { toast('❌ Fout. Vul handmatig in.'); }
-  btn.innerHTML = '🤖 Lees meterstand uit';
+    const worker = await getWorker();
+    const variants = await makeVariants(source);
+    const bestByValue = new Map();
+
+    for (const variant of variants) {
+      const out = await recognizeVariant(worker, variant.canvas, selMeter);
+      const parsed = parseStandFromText(out.text, selMeter);
+      if (!parsed) continue;
+      const combined = (parsed.score || 0) + Math.round((out.confidence || 0) / 12);
+      const prev = bestByValue.get(parsed.value);
+      const next = {
+        value: parsed.value,
+        score: combined,
+        confidence: out.confidence,
+        label: variant.label,
+        reason: parsed.reason,
+        text: normalizeText(out.text),
+        votes: parsed.votes || 1,
+      };
+      if (!prev || next.score > prev.score) bestByValue.set(parsed.value, next);
+      if (next.score >= 16) break;
+    }
+
+    const best = [...bestByValue.values()].sort((a, b) => b.score - a.score || b.confidence - a.confidence)[0];
+
+    if (!best) {
+      document.getElementById('resVal').textContent = '? ' + units[selMeter];
+      document.getElementById('resNote').textContent = '💡 Geen betrouwbare stand gevonden. Snijd strakker rond alleen de cijfers en probeer opnieuw, of voer handmatig in.';
+      document.getElementById('standInput').value = '';
+      toast('⚠️ Geen betrouwbare uitlezing');
+    } else {
+      document.getElementById('resVal').textContent = best.value + ' ' + units[selMeter];
+      document.getElementById('standInput').value = best.value;
+      const certainty = best.score >= 16 ? 'Hoge' : best.score >= 12 ? 'Redelijke' : 'Lage';
+      document.getElementById('resNote').textContent = `💡 ${certainty} zekerheid. Gevonden via ${best.label}. Controleer altijd even handmatig.`;
+      toast('✅ Meterstand voorgesteld');
+    }
+  } catch (e) {
+    console.error(e);
+    document.getElementById('resVal').textContent = '? ' + units[selMeter];
+    document.getElementById('resNote').textContent = '💡 OCR kon niet starten. Controleer je internetverbinding of probeer de pagina opnieuw te laden.';
+    toast('❌ Fout bij uitlezen');
+  }
+
+  btn.innerHTML = '🤖 Uitlezen';
   btn.disabled = false;
+  checkKlaar();
 }
 
 function slaOp() {
   const adres = document.getElementById('scanAdres').value;
-  const stand = document.getElementById('standInput').value.trim();
+  const stand = document.getElementById('standInput').value.trim().replace(/\D/g, '');
   if (!adres) { toast('⚠️ Kies een adres'); return; }
   if (!selMeter) { toast('⚠️ Kies metertype'); return; }
   if (!stand) { toast('⚠️ Vul meterstand in'); return; }
@@ -306,14 +610,16 @@ function slaOp() {
   metingen.push({ id: Date.now(), adres, type: selMeter, stand, eenheid: units[selMeter],
     datum: new Date().toLocaleDateString('nl-NL'),
     tijd: new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}),
-    fotoData: fotoB64 || null });
+    fotoData: cropB64 || fotoB64 || null,
+    bronFoto: cropB64 ? 'crop' : 'origineel' });
   bewaar(); toast('✅ Opgeslagen!');
-  selMeter = null; fotoB64 = null;
+  selMeter = null; fotoB64 = null; origineleDataUrl = null; cropDataUrl = null; cropB64 = null;
   document.getElementById('standInput').value = '';
   document.getElementById('resBox').classList.remove('show');
   document.getElementById('fotoPreview').style.display = 'none';
   document.getElementById('fotoPlaceholder').style.display = 'block';
   document.getElementById('fotoInput').value = '';
+  updateCropCard();
   document.querySelectorAll('.mbtn').forEach(b => b.className = 'mbtn');
   checkKlaar();
 }
