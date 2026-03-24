@@ -295,10 +295,30 @@ function showPage(n, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-'+n).classList.add('active');
   if (el) el.classList.add('active');
-  if (n==='adressen') { laadData().then(() => renderAdressen()); }
-  if (n==='historie') { laadData().then(() => renderHistorie()); }
+  if (n==='adressen') laadEnRender('adressen');
+  if (n==='historie') laadEnRender('historie');
   if (n==='export') renderExport();
   if (n==='scan') renderScanSelect();
+}
+
+async function laadEnRender(pagina) {
+  try {
+    toast('⏳ Data laden…');
+    const [a, m] = await Promise.all([
+      apiCall('getAdressen'),
+      apiCall('getMetingen')
+    ]);
+    adressen = Array.isArray(a) ? a : [];
+    metingen = Array.isArray(m) ? m : [];
+    renderScanSelect();
+    if (pagina === 'adressen') renderAdressen();
+    if (pagina === 'historie') renderHistorie();
+    toast('✅ Data geladen!');
+  } catch(e) {
+    toast('⚠️ Kan data niet laden');
+    if (pagina === 'adressen') renderAdressen();
+    if (pagina === 'historie') renderHistorie();
+  }
 }
 
 function renderScanSelect() {
