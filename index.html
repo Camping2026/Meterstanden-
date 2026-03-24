@@ -629,7 +629,7 @@ function roteerFoto() {
   img.src = 'data:' + fotoMediaType + ';base64,' + fotoB64;
 }
 
-
+function annuleerCrop() {
   document.getElementById('cropOverlay').style.display = 'none';
   document.removeEventListener('touchmove', onDragMove);
   document.removeEventListener('touchend', onDragEnd);
