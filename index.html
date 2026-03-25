@@ -30,6 +30,7 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
 .mbtn.se { border-color: #ffd700; color: #ffd700; background: rgba(255,215,0,0.08); }
 .mbtn.sg { border-color: #ff6b35; color: #ff6b35; background: rgba(255,107,53,0.08); }
 .mbtn.sw { border-color: #00b4d8; color: #00b4d8; background: rgba(0,180,216,0.08); }
+.mbtn.sk { border-color: #a78bfa; color: #a78bfa; background: rgba(167,139,250,0.08); }
 
 .foto-label { display: block; width: 100%; border: 2px dashed #2a2f45; border-radius: 12px; padding: 28px 16px; text-align: center; cursor: pointer; margin-bottom: 14px; background: #1a1d27; -webkit-tap-highlight-color: transparent; }
 .foto-label .fi { font-size: 32px; margin-bottom: 8px; }
@@ -71,6 +72,7 @@ input.stand { font-size: 22px; text-align: center; font-family: monospace; }
 .te { background: rgba(255,215,0,0.12); color: #ffd700; }
 .tg { background: rgba(255,107,53,0.12); color: #ff6b35; }
 .tw { background: rgba(0,180,216,0.12); color: #00b4d8; }
+.tk { background: rgba(167,139,250,0.12); color: #a78bfa; }
 .r-foto { width: 100%; max-height: 140px; object-fit: cover; border-radius: 8px; margin-top: 8px; cursor: pointer; display: block; }
 
 .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
@@ -115,10 +117,11 @@ input.stand { font-size: 22px; text-align: center; font-family: monospace; }
   <select id="scanAdres" onchange="checkKlaar()"><option value="">— Kies een adres —</option></select>
 
   <p class="lbl">Stap 2 — Metertype</p>
-  <div class="meter-btns">
+  <div class="meter-btns" style="grid-template-columns:repeat(4,1fr);">
     <button class="mbtn" onclick="kiesMeter('elektriciteit',this)"><span class="ico">⚡</span>Elektra</button>
     <button class="mbtn" onclick="kiesMeter('gas',this)"><span class="ico">🔥</span>Gas</button>
     <button class="mbtn" onclick="kiesMeter('water',this)"><span class="ico">💧</span>Water</button>
+    <button class="mbtn" onclick="kiesMeter('kast',this)"><span class="ico">🔌</span>Kast</button>
   </div>
 
   <p class="lbl">Stap 3 — Foto</p>
@@ -189,8 +192,12 @@ input.stand { font-size: 22px; text-align: center; font-family: monospace; }
     <div class="res-note" id="resNote"></div>
   </div>
 
-  <p class="lbl">Controleer of pas aan</p>
+  <p class="lbl" id="standLabel">Controleer of pas aan</p>
   <input type="text" class="stand" id="standInput" placeholder="bijv. 5910" inputmode="numeric">
+  <div id="kastNrZone" style="display:none;margin-bottom:14px;">
+    <p class="lbl">Kastnummer / omschrijving</p>
+    <input type="text" id="kastNrInput" placeholder="bijv. K12 of Kast Berging" style="width:100%;padding:13px 14px;background:#1a1d27;border:1px solid #a78bfa;border-radius:10px;color:#e8eaf0;font-size:15px;">
+  </div>
   <button class="btn-s" onclick="slaOp()">✅ Opslaan</button>
 </div>
 
@@ -336,7 +343,25 @@ function renderScanSelect() {
 function kiesMeter(type, el) {
   selMeter = type;
   document.querySelectorAll('.mbtn').forEach(b => b.className = 'mbtn');
-  el.classList.add(type==='elektriciteit'?'se':type==='gas'?'sg':'sw');
+  el.classList.add(type==='elektriciteit'?'se':type==='gas'?'sg':type==='water'?'sw':'sk');
+
+  // Toon/verberg kast velden
+  const kastZone = document.getElementById('kastNrZone');
+  const standInput = document.getElementById('standInput');
+  const standLabel = document.getElementById('standLabel');
+  const aiBtn = document.getElementById('aiBtn');
+
+  if (type === 'kast') {
+    kastZone.style.display = 'block';
+    standInput.style.display = 'none';
+    standLabel.style.display = 'none';
+    aiBtn.innerHTML = '🤖 Lees kastnummer uit (optioneel)';
+  } else {
+    kastZone.style.display = 'none';
+    standInput.style.display = 'block';
+    standLabel.style.display = 'block';
+    aiBtn.innerHTML = '🤖 Lees meterstand uit';
+  }
   checkKlaar();
 }
 
@@ -364,7 +389,7 @@ async function leesUit() {
   const btn = document.getElementById('aiBtn');
   btn.innerHTML = '<span class="spinner"></span>Bezig…';
   btn.disabled = true;
-  const units = { elektriciteit:'kWh', gas:'m³', water:'m³' };
+  const units = { elektriciteit:'kWh', gas:'m³', water:'m³', kast:'foto' };
   try {
     // Detect media type from base64 header
     const fotoInput = document.getElementById('fotoInput');
@@ -378,7 +403,9 @@ async function leesUit() {
         model: 'claude-sonnet-4-20250514', max_tokens: 300,
         messages: [{ role: 'user', content: [
           { type: 'image', source: { type: 'base64', media_type: fotoMediaType, data: fotoB64 } },
-          { type: 'text', text: `Jij bent een expert in het aflezen van meters. Lees de meterstand af van deze ${selMeter}meter. Kijk goed naar alle cijfers. Negeer rode vakjes en decimalen achter de komma. Geef alleen de hele getallen. Als je het niet zeker weet, geef dan je beste schatting. Antwoord uitsluitend in dit JSON formaat: {"stand":"5910","uitleg":"toelichting","betrouwbaar":true}` }
+          { type: 'text', text: selMeter === 'kast' 
+            ? `Dit is een foto van een elektriciteitskast. Lees het kastnummer of de identificatie af. Antwoord uitsluitend in dit JSON formaat: {"stand":"K12","uitleg":"kastnummer zichtbaar","betrouwbaar":true}`
+            : `Jij bent een expert in het aflezen van meters. Lees de meterstand af van deze ${selMeter}meter. Kijk goed naar alle cijfers. Negeer rode vakjes en decimalen achter de komma. Geef alleen de hele getallen. Als je het niet zeker weet, geef dan je beste schatting. Antwoord uitsluitend in dit JSON formaat: {"stand":"5910","uitleg":"toelichting","betrouwbaar":true}` }
         ]}]
       })
     });
@@ -426,11 +453,13 @@ async function leesUit() {
 async function slaOp() {
   const adres = document.getElementById('scanAdres').value;
   const stand = document.getElementById('standInput').value.trim();
+  const kastNr = document.getElementById('kastNrInput').value.trim();
   if (!adres) { toast('⚠️ Kies een adres'); return; }
   if (!selMeter) { toast('⚠️ Kies metertype'); return; }
-  if (!stand) { toast('⚠️ Vul meterstand in'); return; }
-  const units = { elektriciteit:'kWh', gas:'m³', water:'m³' };
-  const meting = { id: Date.now(), adres, type: selMeter, stand, eenheid: units[selMeter],
+  if (!stand && selMeter !== 'kast') { toast('⚠️ Vul meterstand in'); return; }
+  const units = { elektriciteit:'kWh', gas:'m³', water:'m³', kast:'foto' };
+  const eindStand = selMeter === 'kast' ? (kastNr || 'Kast') : stand;
+  const meting = { id: Date.now(), adres, type: selMeter, stand: eindStand, eenheid: units[selMeter],
     datum: new Date().toLocaleDateString('nl-NL'),
     tijd: new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}),
     fotoData: fotoB64 || null };
@@ -441,6 +470,11 @@ async function slaOp() {
   } catch(e) { toast('❌ Fout bij opslaan'); return; }
   selMeter = null; fotoB64 = null; fotoMediaType = 'image/jpeg';
   document.getElementById('standInput').value = '';
+  document.getElementById('kastNrInput').value = '';
+  document.getElementById('kastNrZone').style.display = 'none';
+  document.getElementById('standInput').style.display = 'block';
+  document.getElementById('standLabel').style.display = 'block';
+  document.getElementById('aiBtn').innerHTML = '🤖 Lees meterstand uit';
   document.getElementById('resBox').classList.remove('show');
   document.getElementById('fotoPreviewZone').style.display = 'none';
   document.getElementById('fotoPlaceholder').style.display = 'block';
@@ -714,8 +748,8 @@ function renderHistorie() {
   Object.keys(perJaar).sort((a,b) => b-a).forEach(jaar => {
     html += `<div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">📅 ${jaar}</div>`;
     perJaar[jaar].forEach(m => {
-      const tc = m.type==='elektriciteit'?'te':m.type==='gas'?'tg':'tw';
-      const ic = m.type==='elektriciteit'?'⚡':m.type==='gas'?'🔥':'💧';
+      const tc = m.type==='elektriciteit'?'te':m.type==='gas'?'tg':m.type==='water'?'tw':'tk';
+      const ic = m.type==='elektriciteit'?'⚡':m.type==='gas'?'🔥':m.type==='water'?'💧':'🔌';
       const vb = berekenVerbruik(m.adres, m.type, m.stand, m.datum);
       const verbruikHtml = vb ? `<div style="font-size:12px;margin-top:6px;padding:6px 10px;background:#22263a;border-radius:6px;color:${vb.verbruik>=0?'#00e5a0':'#ff6b35'}">
         ${vb.verbruik>=0?'➕':'➖'} ${Math.abs(vb.verbruik)} ${m.eenheid} verbruik t.o.v. ${vb.datum}
