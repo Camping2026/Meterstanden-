@@ -198,6 +198,8 @@ input.stand { font-size: 22px; text-align: center; font-family: monospace; }
     <p class="lbl">Kastnummer / omschrijving</p>
     <input type="text" id="kastNrInput" placeholder="bijv. K12 of Kast Berging" style="width:100%;padding:13px 14px;background:#1a1d27;border:1px solid #a78bfa;border-radius:10px;color:#e8eaf0;font-size:15px;">
   </div>
+  <p class="lbl">Notitie <span style="color:#6b7280;font-size:10px;">(optioneel)</span></p>
+  <textarea id="notitieInput" placeholder="bijv. meter moeilijk leesbaar, afsluiter defect..." style="width:100%;padding:13px 14px;background:#1a1d27;border:1px solid #2a2f45;border-radius:10px;color:#e8eaf0;font-size:14px;resize:none;height:80px;font-family:Arial,sans-serif;margin-bottom:14px;"></textarea>
   <button class="btn-s" onclick="slaOp()">✅ Opslaan</button>
 </div>
 
@@ -458,10 +460,12 @@ async function slaOp() {
   if (!selMeter) { toast('⚠️ Kies metertype'); return; }
   if (!stand && selMeter !== 'kast') { toast('⚠️ Vul meterstand in'); return; }
   const units = { elektriciteit:'kWh', gas:'m³', water:'m³', kast:'foto' };
+  const notitie = document.getElementById('notitieInput').value.trim();
   const eindStand = selMeter === 'kast' ? (kastNr || 'Kast') : stand;
   const meting = { id: Date.now(), adres, type: selMeter, stand: eindStand, eenheid: units[selMeter],
     datum: new Date().toLocaleDateString('nl-NL'),
     tijd: new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}),
+    notitie: notitie || '',
     fotoData: fotoB64 || null };
   try {
     await apiCall('saveMeting', meting);
@@ -471,6 +475,7 @@ async function slaOp() {
   selMeter = null; fotoB64 = null; fotoMediaType = 'image/jpeg';
   document.getElementById('standInput').value = '';
   document.getElementById('kastNrInput').value = '';
+  document.getElementById('notitieInput').value = '';
   document.getElementById('kastNrZone').style.display = 'none';
   document.getElementById('standInput').style.display = 'block';
   document.getElementById('standLabel').style.display = 'block';
@@ -709,11 +714,9 @@ async function importeer(e) {
       msgEl.textContent = `⚠️ Geen nieuwe adressen${dubbel>0?` (${dubbel} al aanwezig)`:'.'}.`;
     } else {
       msgEl.textContent = `⏳ ${nieuw.length} adressen opslaan…`;
-      // Sla elk adres op in Google Sheets
-      for (const adres of nieuw) {
-        await apiCall('saveAdres', { adres });
-        adressen.push(adres);
-      }
+      // Stuur alle adressen in één keer
+      await apiCall('saveAdressen', { adressen: nieuw });
+      adressen.push(...nieuw);
       renderAdressen(); renderScanSelect();
       msgEl.className = 'msg ok';
       msgEl.textContent = `✅ ${nieuw.length} adres${nieuw.length!==1?'sen':''} geïmporteerd${dubbel>0?` (${dubbel} overgeslagen)`:'.'}.`;
@@ -754,11 +757,12 @@ function renderHistorie() {
       const verbruikHtml = vb ? `<div style="font-size:12px;margin-top:6px;padding:6px 10px;background:#22263a;border-radius:6px;color:${vb.verbruik>=0?'#00e5a0':'#ff6b35'}">
         ${vb.verbruik>=0?'➕':'➖'} ${Math.abs(vb.verbruik)} ${m.eenheid} verbruik t.o.v. ${vb.datum}
       </div>` : '';
+      const notitieHtml = m.notitie ? `<div style="font-size:12px;margin-top:6px;padding:6px 10px;background:#22263a;border-radius:6px;color:#f59e0b;">📝 ${m.notitie}</div>` : '';
       const foto = m.fotoData ? `<img src="data:image/jpeg;base64,${m.fotoData}" class="r-foto" onclick="this.style.maxHeight=this.style.maxHeight==='none'?'140px':'none'">` : '';
       html += `<div class="r-card">
         <div class="r-head"><div class="r-addr">${m.adres}</div><div class="r-date">${m.datum} ${m.tijd}</div></div>
         <span class="r-tag ${tc}">${ic} ${m.stand} ${m.eenheid}</span>
-        ${verbruikHtml}${foto}
+        ${verbruikHtml}${notitieHtml}${foto}
       </div>`;
     });
   });
